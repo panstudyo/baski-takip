@@ -1,0 +1,229 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Fotoğraf Baskı & Cari Takip Sistemi (Cloud)</title>
+    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+    <style>
+        .tab-content { display: none; }
+        .tab-content.active { display: block; }
+        .loading-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.4); z-index: 9999; justify-content: center; align-items: center; color: white; font-weight: bold; }
+    </style>
+</head>
+<body class="bg-gray-100 text-gray-800 font-sans">
+
+    <div id="loading" class="loading-overlay">⌛ İşlem Yapılıyor, Lütfen Bekleyin...</div>
+
+    <nav class="bg-blue-600 text-white shadow-md p-4">
+        <div class="container mx-auto flex justify-between items-center">
+            <h1 class="text-xl font-bold flex items-center gap-2">📸 Baskı Takip v2</h1>
+            <div class="flex gap-2 md:gap-4">
+                <button onclick="switchTab('siparis-ekrani')" class="nav-btn px-3 py-1.5 text-sm md:text-base rounded bg-blue-700 font-semibold">Siparişler</button>
+                <button onclick="switchTab('cari-yonetimi')" class="nav-btn px-3 py-1.5 text-sm md:text-base rounded hover:bg-blue-500">Cariler</button>
+                <button onclick="switchTab('ebat-ayarlari')" class="nav-btn px-3 py-1.5 text-sm md:text-base rounded hover:bg-blue-500">Ayarlar</button>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container mx-auto mt-6 p-4">
+        <div id="siparis-ekrani" class="tab-content active">
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                <div class="bg-white p-6 rounded-lg shadow">
+                    <h2 class="text-lg font-bold mb-4 border-b pb-2 text-blue-600">Yeni Sipariş Ekle</h2>
+                    <form id="order-form" onsubmit="addOrder(event)">
+                        <div class="mb-4"><label class="block text-sm font-medium mb-1">Müşteri</label><select id="order-customer" class="w-full p-2 border rounded bg-gray-50" required></select></div>
+                        <div class="mb-4"><label class="block text-sm font-medium mb-1">Baskı Ebatı</label><select id="order-size" class="w-full p-2 border rounded bg-gray-50" required></select></div>
+                        <div class="mb-4"><label class="block text-sm font-medium mb-1">Adet</label><input type="number" id="order-qty" min="1" value="1" class="w-full p-2 border rounded bg-gray-50" required></div>
+                        <div class="mb-4">
+                            <label class="block text-sm font-medium mb-1">Ödeme Durumu</label>
+                            <div class="flex gap-4 mt-1">
+                                <label class="flex items-center gap-1 cursor-pointer"><input type="radio" name="payment" value="pesin" checked> Peşin</label>
+                                <label class="flex items-center gap-1 cursor-pointer"><input type="radio" name="payment" value="cari"> Cariye Yaz</label>
+                            </div>
+                        </div>
+                        <button type="submit" class="w-full bg-green-600 hover:bg-green-700 text-white font-bold py-2 rounded transition">Kaydet</button>
+                    </form>
+                </div>
+                <div class="bg-white p-6 rounded-lg shadow lg:col-span-2">
+                    <h2 class="text-lg font-bold mb-4 border-b pb-2 text-gray-700">Son Yapılan Baskı İşleri</h2>
+                    <div class="overflow-x-auto"><table class="w-full text-left border-collapse"><thead><tr class="bg-gray-100 text-sm"><th class="p-2 border">Tarih</th><th class="p-2 border">Müşteri</th><th class="p-2 border">Ebat x Adet</th><th class="p-2 border">Tutar</th><th class="p-2 border">Durum</th></tr></thead><tbody id="orders-table-body"></tbody></table></div>
+                </div>
+            </div>
+        </div>
+
+        <div id="cari-yonetimi" class="tab-content">
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                <div class="bg-white p-6 rounded-lg shadow">
+                    <h2 class="text-lg font-bold mb-4 border-b pb-2 text-blue-600">Yeni Müşteri Kaydı</h2>
+                    <form id="customer-form" onsubmit="addCustomer(event)">
+                        <div class="mb-4"><label class="block text-sm font-medium mb-1">Müşteri / Stüdyo Adı</label><input type="text" id="cust-name" class="w-full p-2 border rounded bg-gray-50" required></div>
+                        <div class="mb-4"><label class="block text-sm font-medium mb-1">Telefon</label><input type="text" id="cust-phone" class="w-full p-2 border rounded bg-gray-50"></div>
+                        <div class="mb-4"><label class="block text-sm font-medium mb-1">Müşteri Tipi</label><select id="cust-type" class="w-full p-2 border rounded bg-gray-50"><option value="cari">Sürekli Fotoğrafçı (Cari)</option><option value="gunluk">Günlük / Perakende</option></select></div>
+                        <button type="submit" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 rounded transition">Kaydet</button>
+                    </form>
+                </div>
+                <div class="bg-white p-6 rounded-lg shadow lg:col-span-2">
+                    <h2 class="text-lg font-bold mb-4 border-b pb-2 text-gray-700">Müşteri Listesi & Hesap Bakiyeleri</h2>
+                    <div class="overflow-x-auto"><table class="w-full text-left border-collapse"><thead><tr class="bg-gray-100 text-sm"><th class="p-2 border">Müşteri</th><th class="p-2 border">Telefon</th><th class="p-2 border">Tip</th><th class="p-2 border">Bakiye</th></tr></thead><tbody id="customers-table-body"></tbody></table></div>
+                </div>
+            </div>
+        </div>
+
+        <div id="ebat-ayarlari" class="tab-content">
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                <div class="bg-white p-6 rounded-lg shadow">
+                    <h2 class="text-lg font-bold mb-4 border-b pb-2 text-blue-600">Yeni Ebat Tanımla</h2>
+                    <form id="size-form" onsubmit="addSize(event)">
+                        <div class="mb-4"><label class="block text-sm font-medium mb-1">Baskı Boyutu</label><input type="text" id="size-name" placeholder="Örn: 10x15" class="w-full p-2 border rounded bg-gray-50" required></div>
+                        <div class="mb-4"><label class="block text-sm font-medium mb-1">Birim Fiyat (TL)</label><input type="number" step="0.01" id="size-price" class="w-full p-2 border rounded bg-gray-50" required></div>
+                        <button type="submit" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 rounded transition">Ekle</button>
+                    </form>
+                </div>
+                <div class="bg-white p-6 rounded-lg shadow lg:col-span-2">
+                    <h2 class="text-lg font-bold mb-4 border-b pb-2 text-gray-700">Tanımlı Ebatlar ve Fiyatlar</h2>
+                    <div class="overflow-x-auto"><table class="w-full text-left border-collapse"><thead><tr class="bg-gray-100 text-sm"><th class="p-2 border">Ebat</th><th class="p-2 border">Birim Fiyat</th><th class="p-2 border">İşlem</th></tr></thead><tbody id="sizes-table-body"></tbody></table></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // ⚠️ DIKKAT: Google Apps Script'ten aldığınız Web Uygulaması URL'sini buraya yapıştırın:
+        const SCRIPT_URL = "https://script.google.com/macros/s/AKfycby6QHTvgUHXtGuRF68c5z4PgLvwETNuLfI91--Rc1LaMl2gQ8Fgv9OdqLHd0z1T-D7J/exec";
+
+        let data = { customers: [], sizes: [], orders: [] };
+
+        function showLoading(show) {
+            document.getElementById('loading').style.display = show ? 'flex' : 'none';
+        }
+
+        async function fetchData() {
+            showLoading(true);
+            try {
+                let res = await fetch(SCRIPT_URL);
+                let json = await res.json();
+                
+                // Gelen ham verileri uygun formata dönüştür
+                data.orders = json.orders.map(o => ({ date: o[0], customerName: o[1], details: o[2], total: parseFloat(o[3]), isPaid: o[4] }));
+                data.customers = json.customers.map(c => ({ id: c[0], name: c[1], phone: c[2], type: c[3], balance: parseFloat(c[4]) }));
+                data.sizes = json.sizes.map(s => ({ id: s[0], name: s[1], price: parseFloat(s[2]) }));
+                
+                renderAll();
+            } catch (err) {
+                alert("Veriler yüklenirken hata oluştu: " + err);
+            }
+            showLoading(false);
+        }
+
+        async function postToSheets(payload) {
+            showLoading(true);
+            try {
+                await fetch(SCRIPT_URL, {
+                    method: "POST",
+                    mode: "no-cors",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify(payload)
+                });
+                // no-cors modu kullandığımız için yanıtı okuyamayız ama kısa bir süre sonra yerel veriyi tazeleyebiliriz
+                setTimeout(fetchData, 1500);
+            } catch (err) {
+                alert("Veri gönderilirken hata oluştu: " + err);
+                showLoading(false);
+            }
+        }
+
+        function switchTab(tabId) {
+            document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
+            document.getElementById(tabId).classList.add('active');
+            document.querySelectorAll('.nav-btn').forEach(btn => btn.classList.remove('bg-blue-700', 'font-semibold'));
+            event.target.classList.add('bg-blue-700', 'font-semibold');
+        }
+
+        function addCustomer(e) {
+            e.preventDefault();
+            const name = document.getElementById('cust-name').value;
+            const phone = document.getElementById('cust-phone').value || "-";
+            const type = document.getElementById('cust-type').value;
+            
+            postToSheets({ action: "addCustomer", id: Date.now(), name, phone, type, balance: 0 });
+            document.getElementById('customer-form').reset();
+        }
+
+        function addSize(e) {
+            e.preventDefault();
+            const name = document.getElementById('size-name').value;
+            const price = parseFloat(document.getElementById('size-price').value);
+
+            postToSheets({ action: "addSize", id: Date.now(), name, price });
+            document.getElementById('size-form').reset();
+        }
+
+        function deleteSize(id) {
+            if(confirm("Bu ebatı silmek istediğinize emin misiniz?")) {
+                postToSheets({ action: "deleteSize", id: id });
+            }
+        }
+
+        function addOrder(e) {
+            e.preventDefault();
+            const custId = parseInt(document.getElementById('order-customer').value);
+            const sizeId = parseInt(document.getElementById('order-size').value);
+            const qty = parseInt(document.getElementById('order-qty').value);
+            const paymentType = document.querySelector('input[name="payment"]:checked').value;
+
+            const customer = data.customers.find(c => c.id === custId);
+            const size = data.sizes.find(s => s.id === sizeId);
+            const total = size.price * qty;
+            const isPaidText = paymentType === 'pesin' ? 'Peşin Ödendi' : 'Cariye Borç Yazıldı';
+
+            postToSheets({
+                action: "addOrder",
+                date: new Date().toLocaleString('tr-TR'),
+                customerName: customer.name,
+                details: `${size.name} x ${qty} Adet`,
+                total: total,
+                isPaid: isPaidText
+            });
+
+            document.getElementById('order-form').reset();
+            document.getElementById('order-qty').value = 1;
+        }
+
+        function renderAll() {
+            document.getElementById('order-customer').innerHTML = data.customers.map(c => `<option value="${c.id}">${c.name}</option>`).join('');
+            document.getElementById('order-size').innerHTML = data.sizes.map(s => `<option value="${s.id}">${s.name} (${s.price.toFixed(2)} TL)</option>`).join('');
+
+            document.getElementById('orders-table-body').innerHTML = data.orders.map(o => `
+                <tr class="border-b text-sm hover:bg-gray-50">
+                    <td class="p-2">${o.date}</td>
+                    <td class="p-2 font-medium">${o.customerName}</td>
+                    <td class="p-2">${o.details}</td>
+                    <td class="p-2 font-bold text-blue-600">${o.total.toFixed(2)} TL</td>
+                    <td class="p-2"><span class="px-2 py-0.5 rounded text-xs ${o.isPaid.includes('Peşin') ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}">${o.isPaid}</span></td>
+                </tr>
+            `).join('');
+
+            document.getElementById('customers-table-body').innerHTML = data.customers.map(c => `
+                <tr class="border-b text-sm hover:bg-gray-50">
+                    <td class="p-2 font-medium">${c.name}</td>
+                    <td class="p-2">${c.phone}</td>
+                    <td class="p-2">${c.type === 'cari' ? '🔄 Cari' : '👤 Günlük'}</td>
+                    <td class="p-2 font-bold ${c.balance > 0 ? 'text-red-600' : 'text-green-600'}">${c.balance.toFixed(2)} TL</td>
+                </tr>
+            `).join('');
+
+            document.getElementById('sizes-table-body').innerHTML = data.sizes.map(s => `
+                <tr class="border-b text-sm hover:bg-gray-50">
+                    <td class="p-2 font-medium">${s.name}</td>
+                    <td class="p-2">${s.price.toFixed(2)} TL</td>
+                    <td class="p-2"><button onclick="deleteSize(${s.id})" class="text-red-500 hover:text-red-700 text-xs font-bold">Sil</button></td>
+                </tr>
+            `).join('');
+        }
+
+        // Sayfa açıldığında verileri Google Sheets'ten çek
+        fetchData();
+    </script>
+</body>
+</html>
