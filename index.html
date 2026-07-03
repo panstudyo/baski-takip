@@ -17,7 +17,7 @@
             <h1 class="text-xl font-bold">📸 Pan Fotoğraf Baskı Takip</h1>
             <div class="flex gap-2">
                 <button id="btn-siparis" onclick="switchTab('siparis-ekrani')" class="px-4 py-2 rounded bg-blue-700 font-semibold">Siparişler</button>
-                <button id="btn-cari" onclick="switchTab('cari-yonetimi')" class="px-4 py-2 rounded hover:bg-blue-500">Cariler</button>
+                <button id="btn-cari" onclick="switchTab('cari-yonetimi')" class="px-4 py-2 rounded hover:bg-blue-500">Cariler & Tahsilat</button>
                 <button id="btn-ayar" onclick="switchTab('ebat-ayarlari')" class="px-4 py-2 rounded hover:bg-blue-500">Ayarlar</button>
             </div>
         </div>
@@ -41,7 +41,7 @@
                                 <label class="flex items-center gap-1 cursor-pointer"><input type="radio" name="payment" value="cari"> Cariye Yaz</label>
                             </div>
                         </div>
-                        <button type="submit" class="w-full bg-green-600 hover:bg-green-700 text-white font-bold py-2 rounded transition">Kaydet</button>
+                        <button type="submit" class="w-full bg-green-600 hover:bg-green-700 text-white font-bold py-2 rounded transition">Siparişi Kaydet</button>
                     </form>
                 </div>
                 <div class="bg-white p-6 rounded-lg shadow lg:col-span-2">
@@ -53,15 +53,27 @@
 
         <div id="cari-yonetimi" class="tab-content">
             <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                <div class="bg-white p-6 rounded-lg shadow">
-                    <h2 class="text-lg font-bold mb-4 border-b pb-2 text-blue-600">Yeni Müşteri Kaydı</h2>
-                    <form onsubmit="addCustomer(event)">
-                        <div class="mb-4"><label class="block text-sm font-medium mb-1">Müşteri / Stüdyo Adı</label><input type="text" id="cust-name" class="w-full p-2 border rounded bg-gray-50" required></div>
-                        <div class="mb-4"><label class="block text-sm font-medium mb-1">Telefon</label><input type="text" id="cust-phone" class="w-full p-2 border rounded bg-gray-50"></div>
-                        <div class="mb-4"><label class="block text-sm font-medium mb-1">Müşteri Tipi</label><select id="cust-type" class="w-full p-2 border rounded bg-gray-50"><option value="cari">Sürekli Fotoğrafçı (Cari)</option><option value="gunluk">Günlük / Perakende</option></select></div>
-                        <button type="submit" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 rounded transition">Kaydet</button>
-                    </form>
+                <div class="space-y-6 col-span-1">
+                    <div class="bg-white p-6 rounded-lg shadow">
+                        <h2 class="text-lg font-bold mb-4 border-b pb-2 text-blue-600">Yeni Müşteri Kaydı</h2>
+                        <form onsubmit="addCustomer(event)">
+                            <div class="mb-4"><label class="block text-sm font-medium mb-1">Müşteri / Stüdyo Adı</label><input type="text" id="cust-name" class="w-full p-2 border rounded bg-gray-50" required></div>
+                            <div class="mb-4"><label class="block text-sm font-medium mb-1">Telefon</label><input type="text" id="cust-phone" class="w-full p-2 border rounded bg-gray-50"></div>
+                            <div class="mb-4"><label class="block text-sm font-medium mb-1">Müşteri Tipi</label><select id="cust-type" class="w-full p-2 border rounded bg-gray-50"><option value="cari">Sürekli Fotoğrafçı (Cari)</option><option value="gunluk">Günlük / Perakende</option></select></div>
+                            <button type="submit" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 rounded transition">Kaydet</button>
+                        </form>
+                    </div>
+
+                    <div class="bg-white p-6 rounded-lg shadow border border-green-200">
+                        <h2 class="text-lg font-bold mb-4 border-b pb-2 text-green-600">💰 Ödeme / Tahsilat Al</h2>
+                        <form onsubmit="receivePayment(event)">
+                            <div class="mb-4"><label class="block text-sm font-medium mb-1">Müşteri / Fotoğrafçı</label><select id="payment-customer" class="w-full p-2 border rounded bg-gray-50" required></select></div>
+                            <div class="mb-4"><label class="block text-sm font-medium mb-1">Alınan Ödeme Tutarı (TL)</label><input type="number" step="0.01" id="payment-amount" placeholder="0.00" class="w-full p-2 border rounded bg-gray-50" required></div>
+                            <button type="submit" class="w-full bg-green-600 hover:bg-green-700 text-white font-bold py-2 rounded transition">Tahsilatı İşle</button>
+                        </form>
+                    </div>
                 </div>
+
                 <div class="bg-white p-6 rounded-lg shadow lg:col-span-2">
                     <h2 class="text-lg font-bold mb-4 border-b pb-2 text-gray-700">Müşteri Listesi & Hesap Bakiyeleri</h2>
                     <div class="overflow-x-auto"><table class="w-full text-left border-collapse"><thead><tr class="bg-gray-100 text-sm"><th class="p-2 border">Müşteri</th><th class="p-2 border">Telefon</th><th class="p-2 border">Tip</th><th class="p-2 border">Bakiye</th></tr></thead><tbody id="customers-table-body"></tbody></table></div>
@@ -88,12 +100,11 @@
     </div>
 
     <script>
-        // ⚠️ Buraya en son aldığınız güncel Google Script URL'sini yapıştırın:
+        // ⚠️ Buraya en son kullandığınız Google Script URL'sini yapıştırın:
         const SCRIPT_URL = "https://script.google.com/macros/s/AKfycby6QHTvgUHXtGuRF68c5z4PgLvwETNuLfI91--Rc1LaMl2gQ8Fgv9OdqLHd0z1T-D7J/exec";
 
         let data = { customers: [], sizes: [], orders: [] };
 
-        // Bağımsız buton geçişi (Kilitlenme ihtimali sıfırlandı)
         function switchTab(tabId) {
             document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
             document.getElementById(tabId).classList.add('active');
@@ -126,7 +137,7 @@
                 })
                 .catch(err => {
                     console.error(err);
-                    updateStatus("❌ Veri çekme başarısız oldu. Bağlantıyı kontrol edin.");
+                    updateStatus("❌ Veri yenilenemedi.");
                 });
         }
 
@@ -138,12 +149,8 @@
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify(payload)
             })
-            .then(() => {
-                setTimeout(fetchData, 1000);
-            })
-            .catch(() => {
-                setTimeout(fetchData, 1000);
-            })
+            .then(() => setTimeout(fetchData, 1200))
+            .catch(() => setTimeout(fetchData, 1200))
         }
 
         function addCustomer(e) {
@@ -152,6 +159,28 @@
             const phone = document.getElementById('cust-phone').value || "-";
             const type = document.getElementById('cust-type').value;
             postToSheets({ action: "addCustomer", id: Date.now(), name, phone, type, balance: 0 });
+            e.target.reset();
+        }
+
+        // Ödeme / Tahsilat Fonksiyonu
+        function receivePayment(e) {
+            e.preventDefault();
+            const custId = parseInt(document.getElementById('payment-customer').value);
+            const amount = parseFloat(document.getElementById('payment-amount').value);
+            const customer = data.customers.find(c => c.id === custId);
+
+            if(!customer) return;
+
+            // Ödeme alındığında Google tablosuna negatif borç yansıtarak bakiyeyi düşüreceğiz
+            postToSheets({
+                action: "addOrder",
+                date: new Date().toLocaleString('tr-TR'),
+                customerName: customer.name,
+                details: "💰 Nakit/Kart Ödeme Tahsilatı",
+                total: -amount, // Bakiyeden düşmesi için eksi değer gönderiyoruz
+                isPaid: "Tahsilat Alındı"
+            });
+
             e.target.reset();
         }
 
@@ -197,23 +226,42 @@
         }
 
         function renderAll() {
+            // Seçim kutularını doldur
             document.getElementById('order-customer').innerHTML = data.customers.map(c => `<option value="${c.id}">${c.name}</option>`).join('');
+            document.getElementById('payment-customer').innerHTML = data.customers.filter(c => c.type === 'cari').map(c => `<option value="${c.id}">${c.name}</option>`).join('');
             document.getElementById('order-size').innerHTML = data.sizes.map(s => `<option value="${s.id}">${s.name} (${s.price.toFixed(2)} TL)</option>`).join('');
 
+            // Siparişler Tablosu (Peşinler de görünecek şekilde sabitlendi)
             document.getElementById('orders-table-body').innerHTML = data.orders.map(o => `
-                <tr class="border-b text-sm hover:bg-gray-50"><td class="p-2">${o.date}</td><td class="p-2 font-medium">${o.customerName}</td><td class="p-2">${o.details}</td><td class="p-2 font-bold text-blue-600">${o.total.toFixed(2)} TL</td><td class="p-2"><span class="px-2 py-0.5 rounded text-xs ${o.isPaid.includes('Peşin') ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}">${o.isPaid}</span></td></tr>
+                <tr class="border-b text-sm hover:bg-gray-50">
+                    <td class="p-2">${o.date}</td>
+                    <td class="p-2 font-medium">${o.customerName}</td>
+                    <td class="p-2">${o.details}</td>
+                    <td class="p-2 font-bold text-blue-600">${o.total.toFixed(2)} TL</td>
+                    <td class="p-2"><span class="px-2 py-0.5 rounded text-xs ${o.isPaid.includes('Peşin') || o.isPaid.includes('Tahsilat') ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}">${o.isPaid}</span></td>
+                </tr>
             `).join('');
 
+            // Müşteriler Tablosu
             document.getElementById('customers-table-body').innerHTML = data.customers.map(c => `
-                <tr class="border-b text-sm hover:bg-gray-50"><td class="p-2 font-medium">${c.name}</td><td class="p-2">${c.phone}</td><td class="p-2">${c.type === 'cari' ? '🔄 Cari' : '👤 Günlük'}</td><td class="p-2 font-bold ${c.balance > 0 ? 'text-red-600' : 'text-green-600'}">${c.balance.toFixed(2)} TL</td></tr>
+                <tr class="border-b text-sm hover:bg-gray-50">
+                    <td class="p-2 font-medium">${c.name}</td>
+                    <td class="p-2">${c.phone}</td>
+                    <td class="p-2">${c.type === 'cari' ? '🔄 Cari' : '👤 Günlük'}</td>
+                    <td class="p-2 font-bold ${c.balance > 0 ? 'text-red-600' : 'text-green-600'}">${c.balance.toFixed(2)} TL</td>
+                </tr>
             `).join('');
 
+            // Ebatlar Tablosu
             document.getElementById('sizes-table-body').innerHTML = data.sizes.map(s => `
-                <tr class="border-b text-sm hover:bg-gray-50"><td class="p-2 font-medium">${s.name}</td><td class="p-2">${s.price.toFixed(2)} TL</td><td class="p-2"><button onclick="deleteSize(${s.id})" class="text-red-500 hover:text-red-700 text-xs font-bold">Sil</button></td></tr>
+                <tr class="border-b text-sm hover:bg-gray-50">
+                    <td class="p-2 font-medium">${s.name}</td>
+                    <td class="p-2">${s.price.toFixed(2)} TL</td>
+                    <td class="p-2"><button onclick="deleteSize(${s.id})" class="text-red-500 hover:text-red-700 text-xs font-bold">Sil</button></td>
+                </tr>
             `).join('');
         }
 
-        // Sayfa açılışında tetikle
         fetchData();
     </script>
 </body>
