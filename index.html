@@ -19,9 +19,9 @@
         <div class="container mx-auto flex justify-between items-center">
             <h1 class="text-xl font-bold">📸 Pan Fotoğraf Baskı Takip</h1>
             <div class="flex gap-2">
-                <button onclick="switchTab('siparis-ekrani')" class="nav-btn px-4 py-2 rounded bg-blue-700 font-semibold">Siparişler</button>
-                <button onclick="switchTab('cari-yonetimi')" class="nav-btn px-4 py-2 rounded hover:bg-blue-500">Cariler</button>
-                <button onclick="switchTab('ebat-ayarlari')" class="nav-btn px-4 py-2 rounded hover:bg-blue-500">Ayarlar</button>
+                <button id="btn-siparis" onclick="switchTab('siparis-ekrani')" class="nav-btn px-4 py-2 rounded bg-blue-700 font-semibold">Siparişler</button>
+                <button id="btn-cari" onclick="switchTab('cari-yonetimi')" class="nav-btn px-4 py-2 rounded hover:bg-blue-500">Cariler</button>
+                <button id="btn-ayar" onclick="switchTab('ebat-ayarlari')" class="nav-btn px-4 py-2 rounded hover:bg-blue-500">Ayarlar</button>
             </div>
         </div>
     </nav>
@@ -89,7 +89,7 @@
     </div>
 
     <script>
-        // ⚠️ Google'dan aldığınız Web Uygulaması URL'sini buraya tam olarak yapıştırın:
+        // ⚠️ Buraya Google Apps Script Web Uygulaması linkinizi tam olarak yapıştırın:
         const SCRIPT_URL = "BURAYA_GOOGLE_APPS_SCRIPT_LINKINI_YAPISTIRIN";
 
         let data = { customers: [], sizes: [], orders: [] };
@@ -98,15 +98,21 @@
             document.getElementById('loading').style.display = show ? 'flex' : 'none';
         }
 
-        // Tıklandığında sekmeleri sorunsuz açan fonksiyon (Sabitlendi)
+        // Kesinlikle çakışma yaratmayacak, tarayıcı bağımsız sekme geçişi
         function switchTab(tabId) {
+            // Sekmeleri değiştir
             document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
             document.getElementById(tabId).classList.add('active');
             
-            document.querySelectorAll('.nav-btn').forEach(btn => {
-                btn.classList.remove('bg-blue-700', 'font-semibold');
-            });
-            event.currentTarget.classList.add('bg-blue-700', 'font-semibold');
+            // Buton renklerini sıfırla
+            document.getElementById('btn-siparis').className = "nav-btn px-4 py-2 rounded hover:bg-blue-500";
+            document.getElementById('btn-cari').className = "nav-btn px-4 py-2 rounded hover:bg-blue-500";
+            document.getElementById('btn-ayar').className = "nav-btn px-4 py-2 rounded hover:bg-blue-500";
+            
+            // Aktif butonu renklendir
+            if (tabId === 'siparis-ekrani') document.getElementById('btn-siparis').className = "nav-btn px-4 py-2 rounded bg-blue-700 font-semibold";
+            if (tabId === 'cari-yonetimi') document.getElementById('btn-cari').className = "nav-btn px-4 py-2 rounded bg-blue-700 font-semibold";
+            if (tabId === 'ebat-ayarlari') document.getElementById('btn-ayar').className = "nav-btn px-4 py-2 rounded bg-blue-700 font-semibold";
         }
 
         async function fetchData() {
@@ -130,16 +136,15 @@
         async function postToSheets(payload) {
             showLoading(true);
             try {
-                // Tarayıcı kilitlenmelerini önleyen hızlı gönderme metodu
                 await fetch(SCRIPT_URL, {
                     method: "POST",
                     mode: "no-cors",
                     headers: { "Content-Type": "application/json" },
                     body: JSON.stringify(payload)
                 });
-                setTimeout(fetchData, 1000);
+                setTimeout(fetchData, 1200);
             } catch (err) {
-                setTimeout(fetchData, 1000);
+                setTimeout(fetchData, 1200);
             }
         }
 
@@ -210,7 +215,6 @@
             `).join('');
         }
 
-        // Sayfa ilk yüklendiğinde Google'dan verileri çek
         fetchData();
     </script>
 </body>
