@@ -99,21 +99,35 @@
         }
 
         async function fetchData() {
-            showLoading(true);
-            try {
-                let res = await fetch(SCRIPT_URL);
-                let json = await res.json();
-                
-                // Gelen ham verileri uygun formata dönüştür
-                data.orders = json.orders.map(o => ({ date: o[0], customerName: o[1], details: o[2], total: parseFloat(o[3]), isPaid: o[4] }));
-                data.customers = json.customers.map(c => ({ id: c[0], name: c[1], phone: c[2], type: c[3], balance: parseFloat(c[4]) }));
-                data.sizes = json.sizes.map(s => ({ id: s[0], name: s[1], price: parseFloat(s[2]) }));
-                
-                renderAll();
-            } catch (err) {
-                alert("Veriler yüklenirken hata oluştu: " + err);
+    showLoading(true);
+    try {
+        // Tarayıcının önbelleğe (cache) alıp eski veriyi göstermesini engellemek için sonuna benzersiz bir zaman ekliyoruz (?_=[ZAMAN])
+        let urlWithCacheBuster = SCRIPT_URL + (SCRIPT_URL.includes('?') ? '&' : '?') + '_=' + new Date().getTime();
+        
+        let res = await fetch(urlWithCacheBuster, {
+            method: "GET",
+            mode: "cors", // Tarayıcıya CORS modunda çektiğimizi açıkça belirtiyoruz
+            headers: {
+                "Accept": "application/json"
             }
-            showLoading(false);
+        });
+        
+        if (!res.ok) throw new Error("Ağ yanıtı düzgün değil.");
+        let json = await res.json();
+        
+        // Verileri tablolar için eşitle
+        data.orders = json.orders ? json.orders.map(o => ({ date: o[0], customerName: o[1], details: o[2], total: parseFloat(o[3]) || 0, isPaid: o[4] })) : [];
+        data.customers = json.customers ? json.customers.map(c => ({ id: c[0], name: c[1], phone: c[2], type: c[3], balance: parseFloat(c[4]) || 0 })) : [];
+        data.sizes = json.sizes ? json.sizes.map(s => ({ id: s[0], name: s[1], price: parseFloat(s[2]) || 0 })) : [];
+        
+        renderAll();
+    } catch (err) {
+        console.error("Veri çekme hatası:", err);
+        // Eğer her şeye rağmen tarayıcı bloklarsa, verileri doğrudan Google'dan çekmek yerine alternatif bir alert fırlatalım
+        alert("Veriler Google Sheets'ten alınamadı. Lütfen Apps Script dağıtımını 'Herkes (Anyone)' olarak güncellediğinizden emin olun.");
+    }
+    showLoading(false);
+}
         }
 
         async function postToSheets(payload) {
