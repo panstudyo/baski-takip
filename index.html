@@ -3,12 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Fotoğraf Baskı & Cari Takip Sistemi</title>
+    <title>Pan Fotoğraf Baskı Takip (Supabase Pro)</title>
     <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
-    <style>
-        .tab-content { display: none; }
-        .tab-content.active { display: block; }
-    </style>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
 <body class="bg-gray-100 text-gray-800 font-sans">
 
@@ -24,7 +21,7 @@
     </nav>
 
     <div class="container mx-auto mt-6 p-4">
-        <div id="loading-status" class="mb-4 text-center text-sm font-semibold text-blue-600">⌛ Veriler Google Sheets'ten yükleniyor...</div>
+        <div id="loading-status" class="mb-4 text-center text-sm font-semibold text-blue-600">✅ Sistem Hazır ve Bağlı.</div>
 
         <div id="siparis-ekrani" class="tab-content active">
             <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
@@ -51,7 +48,7 @@
             </div>
         </div>
 
-        <div id="cari-yonetimi" class="tab-content">
+        <div id="cari-yonetimi" class="tab-content hidden">
             <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
                 <div class="space-y-6 col-span-1">
                     <div class="bg-white p-6 rounded-lg shadow">
@@ -63,7 +60,6 @@
                             <button type="submit" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 rounded transition">Kaydet</button>
                         </form>
                     </div>
-
                     <div class="bg-white p-6 rounded-lg shadow border border-green-200">
                         <h2 class="text-lg font-bold mb-4 border-b pb-2 text-green-600">💰 Ödeme / Tahsilat Al</h2>
                         <form onsubmit="receivePayment(event)">
@@ -73,7 +69,6 @@
                         </form>
                     </div>
                 </div>
-
                 <div class="bg-white p-6 rounded-lg shadow lg:col-span-2">
                     <h2 class="text-lg font-bold mb-4 border-b pb-2 text-gray-700">Müşteri Listesi & Hesap Bakiyeleri</h2>
                     <div class="overflow-x-auto"><table class="w-full text-left border-collapse"><thead><tr class="bg-gray-100 text-sm"><th class="p-2 border">Müşteri</th><th class="p-2 border">Telefon</th><th class="p-2 border">Tip</th><th class="p-2 border">Bakiye</th></tr></thead><tbody id="customers-table-body"></tbody></table></div>
@@ -81,7 +76,7 @@
             </div>
         </div>
 
-        <div id="ebat-ayarlari" class="tab-content">
+        <div id="ebat-ayarlari" class="tab-content hidden">
             <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
                 <div class="bg-white p-6 rounded-lg shadow">
                     <h2 class="text-lg font-bold mb-4 border-b pb-2 text-blue-600">Yeni Ebat Tanımla</h2>
@@ -100,14 +95,16 @@
     </div>
 
     <script>
-        // ⚠️ Buraya en son kullandığınız Google Script URL'sini yapıştırın:
-        const SCRIPT_URL = "https://script.google.com/macros/s/AKfycby6QHTvgUHXtGuRF68c5z4PgLvwETNuLfI91--Rc1LaMl2gQ8Fgv9OdqLHd0z1T-D7J/exec";
-
-        let data = { customers: [], sizes: [], orders: [] };
+        // ⚠️ Supabase panelinden aldığınız bilgileri buraya girin:
+        const SUPABASE_URL = "https://afkzunccsxgbobtwxrsd.supabase.co";
+        const SUPABASE_KEY = "sb_publishable_PMs7IucmkuVAaPgjdeMv_w_tOFH4Ko9";
+        
+        const supabase = Supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+        let localData = { customers: [], sizes: [], orders: [] };
 
         function switchTab(tabId) {
-            document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
-            document.getElementById(tabId).classList.add('active');
+            document.querySelectorAll('.tab-content').forEach(el => el.classList.add('hidden'));
+            document.getElementById(tabId).classList.remove('hidden');
             
             document.getElementById('btn-siparis').className = "px-4 py-2 rounded hover:bg-blue-500";
             document.getElementById('btn-cari').className = "px-4 py-2 rounded hover:bg-blue-500";
@@ -122,141 +119,131 @@
             document.getElementById('loading-status').innerText = text;
         }
 
-        function fetchData() {
-            updateStatus("⌛ Güncel veriler Google Sheets'ten çekiliyor...");
-            let urlWithCache = SCRIPT_URL + (SCRIPT_URL.includes('?') ? '&' : '?') + '_=' + new Date().getTime();
-            
-            fetch(urlWithCache)
-                .then(res => res.json())
-                .then(json => {
-                    data.orders = json.orders ? json.orders.map(o => ({ date: o[0], customerName: o[1], details: o[2], total: parseFloat(o[3]) || 0, isPaid: o[4] })) : [];
-                    data.customers = json.customers ? json.customers.map(c => ({ id: c[0], name: c[1], phone: c[2], type: c[3], balance: parseFloat(c[4]) || 0 })) : [];
-                    data.sizes = json.sizes ? json.sizes.map(s => ({ id: s[0], name: s[1], price: parseFloat(s[2]) || 0 })) : [];
-                    renderAll();
-                    updateStatus("✅ Veriler güncel.");
-                })
-                .catch(err => {
-                    console.error(err);
-                    updateStatus("❌ Veri yenilenemedi.");
-                });
+        async function fetchData() {
+            updateStatus("⌛ Veriler yükleniyor...");
+            try {
+                const { data: cust } = await supabase.from('customers').select('*').order('name');
+                const { data: sz } = await supabase.from('sizes').select('*').order('name');
+                const { data: ord } = await supabase.from('orders').select('*').order('date', { ascending: false }).limit(50);
+                
+                localData.customers = cust || [];
+                localData.sizes = sz || [];
+                localData.orders = ord || [];
+                
+                renderAll();
+                updateStatus("✅ Veriler güncel.");
+            } catch (err) {
+                updateStatus("❌ Bağlantı hatası.");
+            }
         }
 
-        function postToSheets(payload) {
-            updateStatus("⏳ Değişiklik Google Sheets'e gönderiliyor...");
-            fetch(SCRIPT_URL, {
-                method: "POST",
-                mode: "no-cors",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify(payload)
-            })
-            .then(() => setTimeout(fetchData, 1200))
-            .catch(() => setTimeout(fetchData, 1200))
-        }
-
-        function addCustomer(e) {
+        async function addCustomer(e) {
             e.preventDefault();
             const name = document.getElementById('cust-name').value;
             const phone = document.getElementById('cust-phone').value || "-";
             const type = document.getElementById('cust-type').value;
-            postToSheets({ action: "addCustomer", id: Date.now(), name, phone, type, balance: 0 });
+            
+            await supabase.from('customers').insert([{ name, phone, type, balance: 0 }]);
             e.target.reset();
+            fetchData();
         }
 
-        // Ödeme / Tahsilat Fonksiyonu
-        function receivePayment(e) {
-            e.preventDefault();
-            const custId = parseInt(document.getElementById('payment-customer').value);
-            const amount = parseFloat(document.getElementById('payment-amount').value);
-            const customer = data.customers.find(c => c.id === custId);
-
-            if(!customer) return;
-
-            // Ödeme alındığında Google tablosuna negatif borç yansıtarak bakiyeyi düşüreceğiz
-            postToSheets({
-                action: "addOrder",
-                date: new Date().toLocaleString('tr-TR'),
-                customerName: customer.name,
-                details: "💰 Nakit/Kart Ödeme Tahsilatı",
-                total: -amount, // Bakiyeden düşmesi için eksi değer gönderiyoruz
-                isPaid: "Tahsilat Alındı"
-            });
-
-            e.target.reset();
-        }
-
-        function addSize(e) {
+        async function addSize(e) {
             e.preventDefault();
             const name = document.getElementById('size-name').value;
             const price = parseFloat(document.getElementById('size-price').value);
-            postToSheets({ action: "addSize", id: Date.now(), name, price });
+            
+            await supabase.from('sizes').insert([{ name, price }]);
             e.target.reset();
+            fetchData();
         }
 
-        function deleteSize(id) {
+        async function deleteSize(id) {
             if(confirm("Bu ebatı silmek istediğinize emin misiniz?")) {
-                postToSheets({ action: "deleteSize", id: id });
+                await supabase.from('sizes').delete().eq('id', id);
+                fetchData();
             }
         }
 
-        function addOrder(e) {
+        async function addOrder(e) {
             e.preventDefault();
             const custId = parseInt(document.getElementById('order-customer').value);
             const sizeId = parseInt(document.getElementById('order-size').value);
             const qty = parseInt(document.getElementById('order-qty').value);
             const paymentType = document.querySelector('input[name="payment"]:checked').value;
 
-            const customer = data.customers.find(c => c.id === custId);
-            const size = data.sizes.find(s => s.id === sizeId);
-            if(!customer || !size) return alert("Lütfen önce müşteri ve ebat tanımlayın!");
-
+            const customer = localData.customers.find(c => c.id === custId);
+            const size = localData.sizes.find(s => s.id === sizeId);
+            
             const total = size.price * qty;
             const isPaidText = paymentType === 'pesin' ? 'Peşin Ödendi' : 'Cariye Borç Yazıldı';
 
-            postToSheets({
-                action: "addOrder",
-                date: new Date().toLocaleString('tr-TR'),
-                customerName: customer.name,
+            // Siparişi ekle
+            await supabase.from('orders').insert([{
+                date: new Date().toISOString(),
+                customer_name: customer.name,
                 details: `${size.name} x ${qty} Adet`,
                 total: total,
-                isPaid: isPaidText
-            });
+                is_paid: isPaidText
+            }]);
+
+            // Cari bakiye güncellemesi
+            if (paymentType === 'cari') {
+                await supabase.from('customers').update({ balance: customer.balance + total }).eq('id', customer.id);
+            }
 
             e.target.reset();
             document.getElementById('order-qty').value = 1;
+            fetchData();
+        }
+
+        async function receivePayment(e) {
+            e.preventDefault();
+            const custId = parseInt(document.getElementById('payment-customer').value);
+            const amount = parseFloat(document.getElementById('payment-amount').value);
+            const customer = localData.customers.find(c => c.id === custId);
+
+            await supabase.from('orders').insert([{
+                date: new Date().toISOString(),
+                customer_name: customer.name,
+                details: "💰 Nakit/Kart Ödeme Tahsilatı",
+                total: -amount,
+                is_paid: "Tahsilat Alındı"
+            }]);
+
+            await supabase.from('customers').update({ balance: customer.balance - amount }).eq('id', customer.id);
+            e.target.reset();
+            fetchData();
         }
 
         function renderAll() {
-            // Seçim kutularını doldur
-            document.getElementById('order-customer').innerHTML = data.customers.map(c => `<option value="${c.id}">${c.name}</option>`).join('');
-            document.getElementById('payment-customer').innerHTML = data.customers.filter(c => c.type === 'cari').map(c => `<option value="${c.id}">${c.name}</option>`).join('');
-            document.getElementById('order-size').innerHTML = data.sizes.map(s => `<option value="${s.id}">${s.name} (${s.price.toFixed(2)} TL)</option>`).join('');
+            document.getElementById('order-customer').innerHTML = localData.customers.map(c => `<option value="${c.id}">${c.name}</option>`).join('');
+            document.getElementById('payment-customer').innerHTML = localData.customers.filter(c => c.type === 'cari').map(c => `<option value="${c.id}">${c.name}</option>`).join('');
+            document.getElementById('order-size').innerHTML = localData.sizes.map(s => `<option value="${s.id}">${s.name} (${s.price.toFixed(2)} TL)</option>`).join('');
 
-            // Siparişler Tablosu (Peşinler de görünecek şekilde sabitlendi)
-            document.getElementById('orders-table-body').innerHTML = data.orders.map(o => `
+            document.getElementById('orders-table-body').innerHTML = localData.orders.map(o => `
                 <tr class="border-b text-sm hover:bg-gray-50">
-                    <td class="p-2">${o.date}</td>
-                    <td class="p-2 font-medium">${o.customerName}</td>
+                    <td class="p-2">${new Date(o.date).toLocaleString('tr-TR')}</td>
+                    <td class="p-2 font-medium">${o.customer_name}</td>
                     <td class="p-2">${o.details}</td>
-                    <td class="p-2 font-bold text-blue-600">${o.total.toFixed(2)} TL</td>
-                    <td class="p-2"><span class="px-2 py-0.5 rounded text-xs ${o.isPaid.includes('Peşin') || o.isPaid.includes('Tahsilat') ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}">${o.isPaid}</span></td>
+                    <td class="p-2 font-bold text-blue-600">${parseFloat(o.total).toFixed(2)} TL</td>
+                    <td class="p-2"><span class="px-2 py-0.5 rounded text-xs ${o.is_paid.includes('Peşin') || o.is_paid.includes('Tahsilat') ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}">${o.is_paid}</span></td>
                 </tr>
             `).join('');
 
-            // Müşteriler Tablosu
-            document.getElementById('customers-table-body').innerHTML = data.customers.map(c => `
+            document.getElementById('customers-table-body').innerHTML = localData.customers.map(c => `
                 <tr class="border-b text-sm hover:bg-gray-50">
                     <td class="p-2 font-medium">${c.name}</td>
                     <td class="p-2">${c.phone}</td>
                     <td class="p-2">${c.type === 'cari' ? '🔄 Cari' : '👤 Günlük'}</td>
-                    <td class="p-2 font-bold ${c.balance > 0 ? 'text-red-600' : 'text-green-600'}">${c.balance.toFixed(2)} TL</td>
+                    <td class="p-2 font-bold ${c.balance > 0 ? 'text-red-600' : 'text-green-600'}">${parseFloat(c.balance).toFixed(2)} TL</td>
                 </tr>
             `).join('');
 
-            // Ebatlar Tablosu
-            document.getElementById('sizes-table-body').innerHTML = data.sizes.map(s => `
+            document.getElementById('sizes-table-body').innerHTML = localData.sizes.map(s => `
                 <tr class="border-b text-sm hover:bg-gray-50">
                     <td class="p-2 font-medium">${s.name}</td>
-                    <td class="p-2">${s.price.toFixed(2)} TL</td>
+                    <td class="p-2">${parseFloat(s.price).toFixed(2)} TL</td>
                     <td class="p-2"><button onclick="deleteSize(${s.id})" class="text-red-500 hover:text-red-700 text-xs font-bold">Sil</button></td>
                 </tr>
             `).join('');
