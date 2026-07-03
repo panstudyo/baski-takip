@@ -3,137 +3,164 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Pan Fotoğraf Baskı Takip (Supabase Pro)</title>
-    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+    <title>Pan Fotoğraf Baskı Takip (Kesin Çözüm)</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <style>
+        .tab-content { display: none; }
+        .tab-content.active { display: block; }
+        .nav-link { cursor: pointer; }
+    </style>
 </head>
-<body class="bg-gray-100 text-gray-800 font-sans">
+<body class="bg-light text-dark">
 
-    <nav class="bg-blue-600 text-white shadow-md p-4">
-        <div class="container mx-auto flex justify-between items-center">
-            <h1 class="text-xl font-bold">📸 Pan Fotoğraf Baskı Takip</h1>
-            <div class="flex gap-2">
-                <button id="btn-siparis" onclick="switchTab('siparis-ekrani')" class="px-4 py-2 rounded bg-blue-700 font-semibold">Siparişler</button>
-                <button id="btn-cari" onclick="switchTab('cari-yonetimi')" class="px-4 py-2 rounded hover:bg-blue-500">Cariler & Tahsilat</button>
-                <button id="btn-ayar" onclick="switchTab('ebat-ayarlari')" class="px-4 py-2 rounded hover:bg-blue-500">Ayarlar</button>
+    <nav class="navbar navbar-expand navbar-dark bg-primary shadow-sm mb-4">
+        <div class="container-fluid">
+            <span class="navbar-brand fw-bold">📸 Pan Fotoğraf Baskı Takip</span>
+            <div class="navbar-nav ms-auto">
+                <button id="btn-siparis" onclick="switchTab('siparis-ekrani')" class="btn btn-light me-2 fw-bold">Siparişler</button>
+                <button id="btn-cari" onclick="switchTab('cari-yonetimi')" class="btn btn-primary me-2">Cariler & Tahsilat</button>
+                <button id="btn-ayar" onclick="switchTab('ebat-ayarlari')" class="btn btn-primary">Ayarlar</button>
             </div>
         </div>
     </nav>
 
-    <div class="container mx-auto mt-6 p-4">
-        <div id="loading-status" class="mb-4 text-center text-sm font-semibold text-blue-600">✅ Sistem Hazır ve Bağlı.</div>
+    <div class="container">
+        <div id="loading-status" class="alert alert-info text-center fw-bold py-2 mb-4">⌛ Sistem başlatılıyor...</div>
 
         <div id="siparis-ekrani" class="tab-content active">
-            <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                <div class="bg-white p-6 rounded-lg shadow">
-                    <h2 class="text-lg font-bold mb-4 border-b pb-2 text-blue-600">Yeni Sipariş Ekle</h2>
-                    <form onsubmit="addOrder(event)">
-                        <div class="mb-4"><label class="block text-sm font-medium mb-1">Müşteri</label><select id="order-customer" class="w-full p-2 border rounded bg-gray-50" required></select></div>
-                        <div class="mb-4"><label class="block text-sm font-medium mb-1">Baskı Ebatı</label><select id="order-size" class="w-full p-2 border rounded bg-gray-50" required></select></div>
-                        <div class="mb-4"><label class="block text-sm font-medium mb-1">Adet</label><input type="number" id="order-qty" min="1" value="1" class="w-full p-2 border rounded bg-gray-50" required></div>
-                        <div class="mb-4">
-                            <label class="block text-sm font-medium mb-1">Ödeme Durumu</label>
-                            <div class="flex gap-4 mt-1">
-                                <label class="flex items-center gap-1 cursor-pointer"><input type="radio" name="payment" value="pesin" checked> Peşin</label>
-                                <label class="flex items-center gap-1 cursor-pointer"><input type="radio" name="payment" value="cari"> Cariye Yaz</label>
+            <div class="row g-4">
+                <div class="col-12 col-lg-4">
+                    <div class="card p-4 shadow-sm">
+                        <h4 class="text-primary fw-bold mb-3 border-bottom pb-2">Yeni Sipariş Ekle</h4>
+                        <form onsubmit="addOrder(event)">
+                            <div class="mb-3"><label class="form-label fw-semibold">Müşteri</label><select id="order-customer" class="form-select bg-white" required></select></div>
+                            <div class="mb-3"><label class="form-label fw-semibold">Baskı Ebatı</label><select id="order-size" class="form-select bg-white" required></select></div>
+                            <div class="mb-3"><label class="form-label fw-semibold">Adet</label><input type="number" id="order-qty" min="1" value="1" class="form-control bg-white" required></div>
+                            <div class="mb-3">
+                                <label class="form-label fw-semibold d-block">Ödeme Durumu</label>
+                                <div class="form-check form-check-inline">
+                                    <input class="form-check-input" type="radio" name="payment" id="pay-pesin" value="pesin" checked>
+                                    <label class="form-check-label" for="pay-pesin">Peşin (Ödendi)</label>
+                                </div>
+                                <div class="form-check form-check-inline">
+                                    <input class="form-check-input" type="radio" name="payment" id="pay-cari" value="cari">
+                                    <label class="form-check-label" for="pay-cari">Cariye Yaz</label>
+                                </div>
                             </div>
-                        </div>
-                        <button type="submit" class="w-full bg-green-600 hover:bg-green-700 text-white font-bold py-2 rounded transition">Siparişi Kaydet</button>
-                    </form>
+                            <button type="submit" class="btn btn-success w-full fw-bold py-2">Siparişi Kaydet</button>
+                        </form>
+                    </div>
                 </div>
-                <div class="bg-white p-6 rounded-lg shadow lg:col-span-2">
-                    <h2 class="text-lg font-bold mb-4 border-b pb-2 text-gray-700">Son Yapılan Baskı İşleri</h2>
-                    <div class="overflow-x-auto"><table class="w-full text-left border-collapse"><thead><tr class="bg-gray-100 text-sm"><th class="p-2 border">Tarih</th><th class="p-2 border">Müşteri</th><th class="p-2 border">Ebat x Adet</th><th class="p-2 border">Tutar</th><th class="p-2 border">Durum</th></tr></thead><tbody id="orders-table-body"></tbody></table></div>
+                <div class="col-12 col-lg-8">
+                    <div class="card p-4 shadow-sm">
+                        <h4 class="text-secondary fw-bold mb-3 border-bottom pb-2">Son Yapılan Baskı İşleri</h4>
+                        <div class="table-responsive"><table class="table table-hover table-striped"><thead><tr><th>Tarih</th><th>Müşteri</th><th>Ebat x Adet</th><th>Tutar</th><th>Durum</th></tr></thead><tbody id="orders-table-body"></tbody></table></div>
+                    </div>
                 </div>
             </div>
         </div>
 
-        <div id="cari-yonetimi" class="tab-content hidden">
-            <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                <div class="space-y-6 col-span-1">
-                    <div class="bg-white p-6 rounded-lg shadow">
-                        <h2 class="text-lg font-bold mb-4 border-b pb-2 text-blue-600">Yeni Müşteri Kaydı</h2>
+        <div id="cari-yonetimi" class="tab-content">
+            <div class="row g-4">
+                <div class="col-12 col-lg-4">
+                    <div class="card p-4 shadow-sm mb-4">
+                        <h4 class="text-primary fw-bold mb-3 border-bottom pb-2">Yeni Müşteri Kaydı</h4>
                         <form onsubmit="addCustomer(event)">
-                            <div class="mb-4"><label class="block text-sm font-medium mb-1">Müşteri / Stüdyo Adı</label><input type="text" id="cust-name" class="w-full p-2 border rounded bg-gray-50" required></div>
-                            <div class="mb-4"><label class="block text-sm font-medium mb-1">Telefon</label><input type="text" id="cust-phone" class="w-full p-2 border rounded bg-gray-50"></div>
-                            <div class="mb-4"><label class="block text-sm font-medium mb-1">Müşteri Tipi</label><select id="cust-type" class="w-full p-2 border rounded bg-gray-50"><option value="cari">Sürekli Fotoğrafçı (Cari)</option><option value="gunluk">Günlük / Perakende</option></select></div>
-                            <button type="submit" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 rounded transition">Kaydet</button>
+                            <div class="mb-3"><label class="form-label fw-semibold">Müşteri / Stüdyo Adı</label><input type="text" id="cust-name" class="form-control" required></div>
+                            <div class="mb-3"><label class="form-label fw-semibold">Telefon</label><input type="text" id="cust-phone" class="form-control"></div>
+                            <div class="mb-3"><label class="form-label fw-semibold">Müşteri Tipi</label><select id="cust-type" class="form-select"><option value="cari">Sürekli Fotoğrafçı (Cari)</option><option value="gunluk">Günlük / Perakende</option></select></div>
+                            <button type="submit" class="btn btn-primary w-full fw-bold">Müşteriyi Kaydet</button>
                         </form>
                     </div>
-                    <div class="bg-white p-6 rounded-lg shadow border border-green-200">
-                        <h2 class="text-lg font-bold mb-4 border-b pb-2 text-green-600">💰 Ödeme / Tahsilat Al</h2>
+                    <div class="card p-4 shadow-sm border-success">
+                        <h4 class="text-success fw-bold mb-3 border-bottom pb-2">💰 Ödeme / Tahsilat Al</h4>
                         <form onsubmit="receivePayment(event)">
-                            <div class="mb-4"><label class="block text-sm font-medium mb-1">Müşteri / Fotoğrafçı</label><select id="payment-customer" class="w-full p-2 border rounded bg-gray-50" required></select></div>
-                            <div class="mb-4"><label class="block text-sm font-medium mb-1">Alınan Ödeme Tutarı (TL)</label><input type="number" step="0.01" id="payment-amount" placeholder="0.00" class="w-full p-2 border rounded bg-gray-50" required></div>
-                            <button type="submit" class="w-full bg-green-600 hover:bg-green-700 text-white font-bold py-2 rounded transition">Tahsilatı İşle</button>
+                            <div class="mb-3"><label class="form-label fw-semibold">Müşteri / Fotoğrafçı</label><select id="payment-customer" class="form-select" required></select></div>
+                            <div class="mb-3"><label class="form-label fw-semibold">Alınan Ödeme Tutarı (TL)</label><input type="number" step="0.01" id="payment-amount" placeholder="0.00" class="form-control" required></div>
+                            <button type="submit" class="btn btn-success w-full fw-bold">Tahsilatı İşle</button>
                         </form>
                     </div>
                 </div>
-                <div class="bg-white p-6 rounded-lg shadow lg:col-span-2">
-                    <h2 class="text-lg font-bold mb-4 border-b pb-2 text-gray-700">Müşteri Listesi & Hesap Bakiyeleri</h2>
-                    <div class="overflow-x-auto"><table class="w-full text-left border-collapse"><thead><tr class="bg-gray-100 text-sm"><th class="p-2 border">Müşteri</th><th class="p-2 border">Telefon</th><th class="p-2 border">Tip</th><th class="p-2 border">Bakiye</th></tr></thead><tbody id="customers-table-body"></tbody></table></div>
+                <div class="col-12 col-lg-8">
+                    <div class="card p-4 shadow-sm">
+                        <h4 class="text-secondary fw-bold mb-3 border-bottom pb-2">Müşteri Listesi & Hesap Bakiyeleri</h4>
+                        <div class="table-responsive"><table class="table table-hover table-striped"><thead><tr><th>Müşteri</th><th>Telefon</th><th>Tip</th><th>Bakiye</th></tr></thead><tbody id="customers-table-body"></tbody></table></div>
+                    </div>
                 </div>
             </div>
         </div>
 
-        <div id="ebat-ayarlari" class="tab-content hidden">
-            <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                <div class="bg-white p-6 rounded-lg shadow">
-                    <h2 class="text-lg font-bold mb-4 border-b pb-2 text-blue-600">Yeni Ebat Tanımla</h2>
-                    <form onsubmit="addSize(event)">
-                        <div class="mb-4"><label class="block text-sm font-medium mb-1">Baskı Boyutu</label><input type="text" id="size-name" placeholder="Örn: 10x15" class="w-full p-2 border rounded bg-gray-50" required></div>
-                        <div class="mb-4"><label class="block text-sm font-medium mb-1">Birim Fiyat (TL)</label><input type="number" step="0.01" id="size-price" class="w-full p-2 border rounded bg-gray-50" required></div>
-                        <button type="submit" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 rounded transition">Ekle</button>
-                    </form>
+        <div id="ebat-ayarlari" class="tab-content">
+            <div class="row g-4">
+                <div class="col-12 col-lg-4">
+                    <div class="card p-4 shadow-sm">
+                        <h4 class="text-primary fw-bold mb-3 border-bottom pb-2">Yeni Ebat Tanımla</h4>
+                        <form onsubmit="addSize(event)">
+                            <div class="mb-3"><label class="form-label fw-semibold">Baskı Boyutu</label><input type="text" id="size-name" placeholder="Örn: 10x15" class="form-control" required></div>
+                            <div class="mb-3"><label class="form-label fw-semibold">Birim Fiyat (TL)</label><input type="number" step="0.01" id="size-price" class="form-control" required></div>
+                            <button type="submit" class="btn btn-primary w-full fw-bold">Ebatı Ekle</button>
+                        </form>
+                    </div>
                 </div>
-                <div class="bg-white p-6 rounded-lg shadow lg:col-span-2">
-                    <h2 class="text-lg font-bold mb-4 border-b pb-2 text-gray-700">Tanımlı Ebatlar ve Fiyatlar</h2>
-                    <div class="overflow-x-auto"><table class="w-full text-left border-collapse"><thead><tr class="bg-gray-100 text-sm"><th class="p-2 border">Ebat</th><th class="p-2 border">Birim Fiyat</th><th class="p-2 border">İşlem</th></tr></thead><tbody id="sizes-table-body"></tbody></table></div>
+                <div class="col-12 col-lg-8">
+                    <div class="card p-4 shadow-sm">
+                        <h4 class="text-secondary fw-bold mb-3 border-bottom pb-2">Tanımlı Ebatlar ve Fiyatlar</h4>
+                        <div class="table-responsive"><table class="table table-hover table-striped"><thead><tr><th>Ebat</th><th>Birim Fiyat</th><th>İşlem</th></tr></thead><tbody id="sizes-table-body"></tbody></table></div>
+                    </div>
                 </div>
             </div>
         </div>
     </div>
 
     <script>
-        // ⚠️ Supabase panelinden aldığınız bilgileri buraya girin:
+        // ⚠️ Supabase panelinden aldığınız API bilgilerini buraya eksiksiz girin:
         const SUPABASE_URL = "https://afkzunccsxgbobtwxrsd.supabase.co";
         const SUPABASE_KEY = "sb_publishable_PMs7IucmkuVAaPgjdeMv_w_tOFH4Ko9";
         
+        // Supabase bağlantısını başlat
         const supabase = Supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
         let localData = { customers: [], sizes: [], orders: [] };
 
+        // 🚀 KESİNLİKLE KİLİTLENMEYEN VE BAĞIMSIZ BUTON GEÇİŞ FONKSİYONU
         function switchTab(tabId) {
-            document.querySelectorAll('.tab-content').forEach(el => el.classList.add('hidden'));
-            document.getElementById(tabId).classList.remove('hidden');
+            document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
+            document.getElementById(tabId).classList.add('active');
             
-            document.getElementById('btn-siparis').className = "px-4 py-2 rounded hover:bg-blue-500";
-            document.getElementById('btn-cari').className = "px-4 py-2 rounded hover:bg-blue-500";
-            document.getElementById('btn-ayar').className = "px-4 py-2 rounded hover:bg-blue-500";
+            document.getElementById('btn-siparis').className = "btn btn-primary me-2";
+            document.getElementById('btn-cari').className = "btn btn-primary me-2";
+            document.getElementById('btn-ayar').className = "btn btn-primary";
             
-            if (tabId === 'siparis-ekrani') document.getElementById('btn-siparis').className = "px-4 py-2 rounded bg-blue-700 font-semibold";
-            if (tabId === 'cari-yonetimi') document.getElementById('btn-cari').className = "px-4 py-2 rounded bg-blue-700 font-semibold";
-            if (tabId === 'ebat-ayarlari') document.getElementById('btn-ayar').className = "px-4 py-2 rounded bg-blue-700 font-semibold";
+            if (tabId === 'siparis-ekrani') document.getElementById('btn-siparis').className = "btn btn-light me-2 fw-bold text-primary shadow-sm";
+            if (tabId === 'cari-yonetimi') document.getElementById('btn-cari').className = "btn btn-light me-2 fw-bold text-primary shadow-sm";
+            if (tabId === 'ebat-ayarlari') document.getElementById('btn-ayar').className = "btn btn-light fw-bold text-primary shadow-sm";
         }
 
-        function updateStatus(text) {
-            document.getElementById('loading-status').innerText = text;
+        function updateStatus(text, className = "alert-info") {
+            const statusEl = document.getElementById('loading-status');
+            statusEl.innerText = text;
+            statusEl.className = `alert text-center fw-bold py-2 mb-4 ${className}`;
         }
 
+        // Supabase'den Veri Çekme (Hata verse bile ekranı kilitlemez)
         async function fetchData() {
-            updateStatus("⌛ Veriler yükleniyor...");
+            updateStatus("⌛ Veriler güncelleniyor...");
             try {
-                const { data: cust } = await supabase.from('customers').select('*').order('name');
-                const { data: sz } = await supabase.from('sizes').select('*').order('name');
-                const { data: ord } = await supabase.from('orders').select('*').order('date', { ascending: false }).limit(50);
+                const { data: cust, error: e1 } = await supabase.from('customers').select('*').order('name');
+                const { data: sz, error: e2 } = await supabase.from('sizes').select('*').order('name');
+                const { data: ord, error: e3 } = await supabase.from('orders').select('*').order('date', { ascending: false }).limit(50);
                 
+                if(e1 || e2 || e3) throw new Error("Supabase okuma hatası");
+
                 localData.customers = cust || [];
                 localData.sizes = sz || [];
                 localData.orders = ord || [];
                 
                 renderAll();
-                updateStatus("✅ Veriler güncel.");
+                updateStatus("✅ Veriler güncel ve senkronize.", "alert-success");
             } catch (err) {
-                updateStatus("❌ Bağlantı hatası.");
+                console.error(err);
+                updateStatus("⚠️ Supabase API Key veya URL hatalı! Lütfen kodun içindeki bilgileri kontrol edin.", "alert-danger");
             }
         }
 
@@ -175,10 +202,11 @@
             const customer = localData.customers.find(c => c.id === custId);
             const size = localData.sizes.find(s => s.id === sizeId);
             
+            if(!customer || !size) return alert("Hata: Müşteri veya ebat verisi bulunamadı!");
+
             const total = size.price * qty;
             const isPaidText = paymentType === 'pesin' ? 'Peşin Ödendi' : 'Cariye Borç Yazıldı';
 
-            // Siparişi ekle
             await supabase.from('orders').insert([{
                 date: new Date().toISOString(),
                 customer_name: customer.name,
@@ -187,7 +215,6 @@
                 is_paid: isPaidText
             }]);
 
-            // Cari bakiye güncellemesi
             if (paymentType === 'cari') {
                 await supabase.from('customers').update({ balance: customer.balance + total }).eq('id', customer.id);
             }
@@ -202,6 +229,8 @@
             const custId = parseInt(document.getElementById('payment-customer').value);
             const amount = parseFloat(document.getElementById('payment-amount').value);
             const customer = localData.customers.find(c => c.id === custId);
+
+            if(!customer) return alert("Müşteri seçilemedi!");
 
             await supabase.from('orders').insert([{
                 date: new Date().toISOString(),
@@ -222,33 +251,34 @@
             document.getElementById('order-size').innerHTML = localData.sizes.map(s => `<option value="${s.id}">${s.name} (${s.price.toFixed(2)} TL)</option>`).join('');
 
             document.getElementById('orders-table-body').innerHTML = localData.orders.map(o => `
-                <tr class="border-b text-sm hover:bg-gray-50">
-                    <td class="p-2">${new Date(o.date).toLocaleString('tr-TR')}</td>
-                    <td class="p-2 font-medium">${o.customer_name}</td>
-                    <td class="p-2">${o.details}</td>
-                    <td class="p-2 font-bold text-blue-600">${parseFloat(o.total).toFixed(2)} TL</td>
-                    <td class="p-2"><span class="px-2 py-0.5 rounded text-xs ${o.is_paid.includes('Peşin') || o.is_paid.includes('Tahsilat') ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}">${o.is_paid}</span></td>
+                <tr>
+                    <td><small>${new Date(o.date).toLocaleString('tr-TR')}</small></td>
+                    <td class="fw-bold">${o.customer_name}</td>
+                    <td>${o.details}</td>
+                    <td class="fw-bold text-primary">${parseFloat(o.total).toFixed(2)} TL</td>
+                    <td><span class="badge ${o.is_paid.includes('Peşin') || o.is_paid.includes('Tahsilat') ? 'bg-success' : 'bg-danger'}">${o.is_paid}</span></td>
                 </tr>
             `).join('');
 
             document.getElementById('customers-table-body').innerHTML = localData.customers.map(c => `
-                <tr class="border-b text-sm hover:bg-gray-50">
-                    <td class="p-2 font-medium">${c.name}</td>
-                    <td class="p-2">${c.phone}</td>
-                    <td class="p-2">${c.type === 'cari' ? '🔄 Cari' : '👤 Günlük'}</td>
-                    <td class="p-2 font-bold ${c.balance > 0 ? 'text-red-600' : 'text-green-600'}">${parseFloat(c.balance).toFixed(2)} TL</td>
+                <tr>
+                    <td class="fw-bold">${c.name}</td>
+                    <td>${c.phone}</td>
+                    <td>${c.type === 'cari' ? '🔄 Cari' : '👤 Günlük'}</td>
+                    <td class="fw-bold ${c.balance > 0 ? 'text-danger' : 'text-success'}">${parseFloat(c.balance).toFixed(2)} TL</td>
                 </tr>
             `).join('');
 
             document.getElementById('sizes-table-body').innerHTML = localData.sizes.map(s => `
-                <tr class="border-b text-sm hover:bg-gray-50">
-                    <td class="p-2 font-medium">${s.name}</td>
-                    <td class="p-2">${parseFloat(s.price).toFixed(2)} TL</td>
-                    <td class="p-2"><button onclick="deleteSize(${s.id})" class="text-red-500 hover:text-red-700 text-xs font-bold">Sil</button></td>
+                <tr>
+                    <td class="fw-bold">${s.name}</td>
+                    <td>${parseFloat(s.price).toFixed(2)} TL</td>
+                    <td><button onclick="deleteSize(${s.id})" class="btn btn-sm btn-danger py-0 px-2 font-monospace">Sil</button></td>
                 </tr>
             `).join('');
         }
 
+        // Sayfa açıldığında başlat
         fetchData();
     </script>
 </body>
