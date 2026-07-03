@@ -3,16 +3,23 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Pan Fotoğraf Baskı Takip (Direkt Fetch)</title>
+    <title>Pan Fotoğraf Baskı Takip</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
     <style>
         .tab-content { display: none; }
         .tab-content.active { display: block; }
+        /* Yazıcı çıktısı için özel tasarım (Sadece döküm alanını basar, menüleri gizler) */
+        @media print {
+            body * { visibility: hidden; }
+            #print-section, #print-section * { visibility: visible; }
+            #print-section { position: absolute; left: 0; top: 0; width: 100%; }
+            .no-print { display: none !important; }
+        }
     </style>
 </head>
 <body class="bg-light text-dark">
 
-    <nav class="navbar navbar-expand navbar-dark bg-primary shadow-sm mb-4">
+    <nav class="navbar navbar-expand navbar-dark bg-primary shadow-sm mb-4 no-print">
         <div class="container-fluid">
             <span class="navbar-brand fw-bold">📸 Pan Fotoğraf Baskı Takip</span>
             <div class="navbar-nav ms-auto">
@@ -24,9 +31,9 @@
     </nav>
 
     <div class="container">
-        <div id="loading-status" class="alert alert-info text-center fw-bold py-2 mb-4">⌛ Sistem başlatılıyor...</div>
+        <div id="loading-status" class="alert alert-info text-center fw-bold py-2 mb-4 no-print">⌛ Sistem başlatılıyor...</div>
 
-        <div id="siparis-ekrani" class="tab-content active">
+        <div id="siparis-ekrani" class="tab-content active no-print">
             <div class="row g-4">
                 <div class="col-12 col-lg-4">
                     <div class="card p-4 shadow-sm">
@@ -60,7 +67,7 @@
         </div>
 
         <div id="cari-yonetimi" class="tab-content">
-            <div class="row g-4">
+            <div class="row g-4 no-print">
                 <div class="col-12 col-lg-4">
                     <div class="card p-4 shadow-sm mb-4">
                         <h4 class="text-primary fw-bold mb-3 border-bottom pb-2">Yeni Müşteri Kaydı</h4>
@@ -83,13 +90,30 @@
                 <div class="col-12 col-lg-8">
                     <div class="card p-4 shadow-sm">
                         <h4 class="text-secondary fw-bold mb-3 border-bottom pb-2">Müşteri Listesi & Hesap Bakiyeleri</h4>
-                        <div class="table-responsive"><table class="table table-hover table-striped"><thead><tr><th>Müşteri</th><th>Telefon</th><th>Tip</th><th>Bakiye</th></tr></thead><tbody id="customers-table-body"></tbody></table></div>
+                        <div class="table-responsive"><table class="table table-hover table-striped"><thead><tr><th>Müşteri</th><th>Telefon</th><th>Tip</th><th>Bakiye</th><th>İşlemler</th></tr></thead><tbody id="customers-table-body"></tbody></table></div>
                     </div>
+                </div>
+            </div>
+
+            <div id="print-section" class="card p-4 shadow-sm mt-4 d-none">
+                <div class="d-flex justify-content-between align-items-center mb-3 border-bottom pb-2">
+                    <h4 class="text-dark fw-bold m-0">📄 Müşteri İş Dökümü & Cari Ekstre</h4>
+                    <button onclick="window.print()" class="btn btn-dark btn-sm no-print fw-bold">🖨️ Yazdır / PDF Yap</button>
+                </div>
+                <div class="row mb-3 bg-light p-3 rounded border">
+                    <div class="col-6"><strong>Müşteri / Stüdyo:</strong> <span id="exp-cust-name">-</span></div>
+                    <div class="col-6 text-end"><strong>Güncel Borç Bakiyesi:</strong> <span id="exp-cust-balance" class="fw-bold text-danger">0.00 TL</span></div>
+                </div>
+                <div class="table-responsive">
+                    <table class="table table-bordered table-striped">
+                        <thead class="table-dark"><tr><th>Tarih</th><th>İşlem / Açıklama</th><th class="text-end">Tutar</th><th>Durum</th></tr></thead>
+                        <tbody id="statement-table-body"></tbody>
+                    </table>
                 </div>
             </div>
         </div>
 
-        <div id="ebat-ayarlari" class="tab-content">
+        <div id="ebat-ayarlari" class="tab-content no-print">
             <div class="row g-4">
                 <div class="col-12 col-lg-4">
                     <div class="card p-4 shadow-sm">
@@ -112,13 +136,12 @@
     </div>
 
     <script>
-        // ⚠️ Buraya kendi Supabase bilgilerinizi tırnakların arasına yapıştırın:
+        // ⚠️ Kendi Supabase bilgilerinizi tırnakların arasına yapıştırın:
         const SUPABASE_URL = "https://afkzunccsxgbobtwxrsd.supabase.co";
         const SUPABASE_KEY = "sb_publishable_PMs7IucmkuVAaPgjdeMv_w_tOFH4Ko9";
         
         let localData = { customers: [], sizes: [], orders: [] };
 
-        // Standart başlıklar
         const headers = {
             "apikey": SUPABASE_KEY,
             "Authorization": `Bearer ${SUPABASE_KEY}`,
@@ -130,41 +153,34 @@
             document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
             document.getElementById(tabId).classList.add('active');
             
-            document.getElementById('btn-siparis').className = "btn btn-primary me-2";
-            document.getElementById('btn-cari').className = "btn btn-primary me-2";
-            document.getElementById('btn-ayar').className = "btn btn-primary";
+            document.getElementById('btn-siparis').className = "btn btn-primary me-2 no-print";
+            document.getElementById('btn-cari').className = "btn btn-primary me-2 no-print";
+            document.getElementById('btn-ayar').className = "btn btn-primary no-print";
             
-            if (tabId === 'siparis-ekrani') document.getElementById('btn-siparis').className = "btn btn-light me-2 fw-bold text-primary shadow-sm";
-            if (tabId === 'cari-yonetimi') document.getElementById('btn-cari').className = "btn btn-light me-2 fw-bold text-primary shadow-sm";
-            if (tabId === 'ebat-ayarlari') document.getElementById('btn-ayar').className = "btn btn-light fw-bold text-primary shadow-sm";
+            if (tabId === 'siparis-ekrani') document.getElementById('btn-siparis').className = "btn btn-light me-2 fw-bold text-primary shadow-sm no-print";
+            if (tabId === 'cari-yonetimi') document.getElementById('btn-cari').className = "btn btn-light me-2 fw-bold text-primary shadow-sm no-print";
+            if (tabId === 'ebat-ayarlari') document.getElementById('btn-ayar').className = "btn btn-light fw-bold text-primary shadow-sm no-print";
         }
 
         function updateStatus(text, className = "alert-info") {
             const statusEl = document.getElementById('loading-status');
-            statusEl.innerText = text;
-            statusEl.className = `alert text-center fw-bold py-2 mb-4 ${className}`;
+            if(statusEl) {
+                statusEl.innerText = text;
+                statusEl.className = `alert text-center fw-bold py-2 mb-4 ${className}`;
+            }
         }
 
-        // Doğrudan Fetch API kullanan kararlı fonksiyon
         async function fetchData() {
             updateStatus("⌛ Veriler güncelleniyor...");
             try {
-                // Müşterileri çek
                 let r1 = await fetch(`${SUPABASE_URL}/rest/v1/customers?order=name.asc`, { headers });
                 let cust = await r1.json();
 
-                // Ebatları çek
                 let r2 = await fetch(`${SUPABASE_URL}/rest/v1/sizes?order=name.asc`, { headers });
                 let sz = await r2.json();
 
-                // Siparişleri çek
-                let r3 = await fetch(`${SUPABASE_URL}/rest/v1/orders?order=date.desc&limit=50`, { headers });
+                let r3 = await fetch(`${SUPABASE_URL}/rest/v1/orders?order=date.desc&limit=200`, { headers });
                 let ord = await r3.json();
-
-                if (cust.error || sz.error || ord.error) {
-                    updateStatus("❌ API Erişimi Reddedildi. URL veya Key hatalı.", "alert-danger");
-                    return;
-                }
 
                 localData.customers = Array.isArray(cust) ? cust : [];
                 localData.sizes = Array.isArray(sz) ? sz : [];
@@ -175,6 +191,32 @@
             } catch (err) {
                 updateStatus("❌ Bağlantı hatası: " + err.message, "alert-danger");
             }
+        }
+
+        // Müşteri bazlı döküm süzme fonksiyonu
+        function showCustomerStatement(customerName, balance) {
+            document.getElementById('print-section').classList.remove('none', 'd-none');
+            document.getElementById('exp-cust-name').innerText = customerName;
+            document.getElementById('exp-cust-balance').innerText = parseFloat(balance).toFixed(2) + " TL";
+            
+            // Bu müşteriye ait tüm işleri ve tahsilatları filtrele
+            const filteredOrders = localData.orders.filter(o => o.customer_name === customerName);
+            
+            document.getElementById('statement-table-body').innerHTML = filteredOrders.map(o => `
+                <tr>
+                    <td>${new Date(o.date).toLocaleString('tr-TR')}</td>
+                    <td>${o.details}</td>
+                    <td class="text-end fw-bold ${o.total < 0 ? 'text-success' : 'text-dark'}">${parseFloat(o.total).toFixed(2)} TL</td>
+                    <td><span class="badge ${o.is_paid.includes('Peşin') || o.is_paid.includes('Tahsilat') ? 'bg-success' : 'bg-danger'}">${o.is_paid}</span></td>
+                </tr>
+            `).join('');
+
+            if(filteredOrders.length === 0) {
+                document.getElementById('statement-table-body').innerHTML = '<tr><td colspan="4" class="text-center text-muted">Bu müşteriye ait geçmiş işlem kaydı bulunamadı.</td></tr>';
+            }
+            
+            // Sayfayı döküm alanına kaydır
+            document.getElementById('print-section').scrollIntoView({ behavior: 'smooth' });
         }
 
         async function addCustomer(e) {
@@ -190,6 +232,13 @@
             });
             e.target.reset();
             fetchData();
+        }
+
+        async function deleteCustomer(id) {
+            if(confirm("Bu müşteriyi silmek istediğinize emin misiniz?")) {
+                await fetch(`${SUPABASE_URL}/rest/v1/customers?id=eq.${id}`, { method: "DELETE", headers });
+                fetchData();
+            }
         }
 
         async function addSize(e) {
@@ -226,7 +275,6 @@
             const total = size.price * qty;
             const isPaidText = paymentType === 'pesin' ? 'Peşin Ödendi' : 'Cariye Borç Yazıldı';
 
-            // Siparişi kaydet
             await fetch(`${SUPABASE_URL}/rest/v1/orders`, {
                 method: "POST",
                 headers,
@@ -239,7 +287,6 @@
                 }])
             });
 
-            // Cari bakiye güncellemesi
             if (paymentType === 'cari') {
                 await fetch(`${SUPABASE_URL}/rest/v1/customers?id=eq.${customer.id}`, {
                     method: "PATCH",
@@ -296,12 +343,17 @@
                 </tr>
             `).join('');
 
+            // Müşteri Tablosuna "Döküm Al" butonu eklendi
             document.getElementById('customers-table-body').innerHTML = localData.customers.map(c => `
                 <tr>
                     <td class="fw-bold">${c.name}</td>
                     <td>${c.phone}</td>
                     <td>${c.type === 'cari' ? '🔄 Cari' : '👤 Günlük'}</td>
                     <td class="fw-bold ${c.balance > 0 ? 'text-danger' : 'text-success'}">${parseFloat(c.balance).toFixed(2)} TL</td>
+                    <td>
+                        <button onclick="showCustomerStatement('${c.name}', ${c.balance})" class="btn btn-sm btn-info text-white py-0 px-2 fw-semibold me-1">Döküm Al</button>
+                        <button onclick="deleteCustomer(${c.id})" class="btn btn-sm btn-outline-danger py-0 px-2">Sil</button>
+                    </td>
                 </tr>
             `).join('');
 
@@ -314,7 +366,6 @@
             `).join('');
         }
 
-        // Bilgiler eksik girildiyse hemen uyar
         if(SUPABASE_URL.includes("BURAYA") || SUPABASE_KEY.includes("BURAYA")) {
             updateStatus("⚠️ Hata: HTML içindeki SUPABASE_URL ve KEY alanlarını doldurmadınız!", "alert-danger");
         } else {
