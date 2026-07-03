@@ -3,13 +3,12 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Pan Fotoğraf Baskı Takip (Kesin Çözüm)</title>
+    <title>Pan Fotoğraf Baskı Takip</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
         .tab-content { display: none; }
         .tab-content.active { display: block; }
-        .nav-link { cursor: pointer; }
     </style>
 </head>
 <body class="bg-light text-dark">
@@ -18,7 +17,7 @@
         <div class="container-fluid">
             <span class="navbar-brand fw-bold">📸 Pan Fotoğraf Baskı Takip</span>
             <div class="navbar-nav ms-auto">
-                <button id="btn-siparis" onclick="switchTab('siparis-ekrani')" class="btn btn-light me-2 fw-bold">Siparişler</button>
+                <button id="btn-siparis" onclick="switchTab('siparis-ekrani')" class="btn btn-light me-2 fw-bold text-primary shadow-sm">Siparişler</button>
                 <button id="btn-cari" onclick="switchTab('cari-yonetimi')" class="btn btn-primary me-2">Cariler & Tahsilat</button>
                 <button id="btn-ayar" onclick="switchTab('ebat-ayarlari')" class="btn btn-primary">Ayarlar</button>
             </div>
@@ -48,7 +47,7 @@
                                     <label class="form-check-label" for="pay-cari">Cariye Yaz</label>
                                 </div>
                             </div>
-                            <button type="submit" class="btn btn-success w-full fw-bold py-2">Siparişi Kaydet</button>
+                            <button type="submit" class="btn btn-success w-100 fw-bold py-2">Siparişi Kaydet</button>
                         </form>
                     </div>
                 </div>
@@ -70,7 +69,7 @@
                             <div class="mb-3"><label class="form-label fw-semibold">Müşteri / Stüdyo Adı</label><input type="text" id="cust-name" class="form-control" required></div>
                             <div class="mb-3"><label class="form-label fw-semibold">Telefon</label><input type="text" id="cust-phone" class="form-control"></div>
                             <div class="mb-3"><label class="form-label fw-semibold">Müşteri Tipi</label><select id="cust-type" class="form-select"><option value="cari">Sürekli Fotoğrafçı (Cari)</option><option value="gunluk">Günlük / Perakende</option></select></div>
-                            <button type="submit" class="btn btn-primary w-full fw-bold">Müşteriyi Kaydet</button>
+                            <button type="submit" class="btn btn-primary w-100 fw-bold">Müşteriyi Kaydet</button>
                         </form>
                     </div>
                     <div class="card p-4 shadow-sm border-success">
@@ -78,7 +77,7 @@
                         <form onsubmit="receivePayment(event)">
                             <div class="mb-3"><label class="form-label fw-semibold">Müşteri / Fotoğrafçı</label><select id="payment-customer" class="form-select" required></select></div>
                             <div class="mb-3"><label class="form-label fw-semibold">Alınan Ödeme Tutarı (TL)</label><input type="number" step="0.01" id="payment-amount" placeholder="0.00" class="form-control" required></div>
-                            <button type="submit" class="btn btn-success w-full fw-bold">Tahsilatı İşle</button>
+                            <button type="submit" class="btn btn-success w-100 fw-bold">Tahsilatı İşle</button>
                         </form>
                     </div>
                 </div>
@@ -99,7 +98,7 @@
                         <form onsubmit="addSize(event)">
                             <div class="mb-3"><label class="form-label fw-semibold">Baskı Boyutu</label><input type="text" id="size-name" placeholder="Örn: 10x15" class="form-control" required></div>
                             <div class="mb-3"><label class="form-label fw-semibold">Birim Fiyat (TL)</label><input type="number" step="0.01" id="size-price" class="form-control" required></div>
-                            <button type="submit" class="btn btn-primary w-full fw-bold">Ebatı Ekle</button>
+                            <button type="submit" class="btn btn-primary w-100 fw-bold">Ebatı Ekle</button>
                         </form>
                     </div>
                 </div>
@@ -114,15 +113,13 @@
     </div>
 
     <script>
-        // ⚠️ Supabase panelinden aldığınız API bilgilerini buraya eksiksiz girin:
+        // ⚠️ Supabase URL ve Key'inizi buraya tırnakların arasına yapıştırın:
         const SUPABASE_URL = "https://afkzunccsxgbobtwxrsd.supabase.co";
         const SUPABASE_KEY = "sb_publishable_PMs7IucmkuVAaPgjdeMv_w_tOFH4Ko9";
         
-        // Supabase bağlantısını başlat
-        const supabase = Supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+        let supabase;
         let localData = { customers: [], sizes: [], orders: [] };
 
-        // 🚀 KESİNLİKLE KİLİTLENMEYEN VE BAĞIMSIZ BUTON GEÇİŞ FONKSİYONU
         function switchTab(tabId) {
             document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
             document.getElementById(tabId).classList.add('active');
@@ -142,7 +139,21 @@
             statusEl.className = `alert text-center fw-bold py-2 mb-4 ${className}`;
         }
 
-        // Supabase'den Veri Çekme (Hata verse bile ekranı kilitlemez)
+        async function initSystem() {
+            // Eğer URL veya KEY girilmediyse kullanıcıyı uyar
+            if(SUPABASE_URL.includes("BURAYA") || SUPABASE_KEY.includes("BURAYA")) {
+                updateStatus("⚠️ Hata: HTML kodunun içindeki SUPABASE_URL veya SUPABASE_KEY alanlarını doldurmadınız!", "alert-danger");
+                return;
+            }
+
+            try {
+                supabase = Supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+                await fetchData();
+            } catch(e) {
+                updateStatus("❌ Başlatma hatası: " + e.message, "alert-danger");
+            }
+        }
+
         async function fetchData() {
             updateStatus("⌛ Veriler güncelleniyor...");
             try {
@@ -150,7 +161,11 @@
                 const { data: sz, error: e2 } = await supabase.from('sizes').select('*').order('name');
                 const { data: ord, error: e3 } = await supabase.from('orders').select('*').order('date', { ascending: false }).limit(50);
                 
-                if(e1 || e2 || e3) throw new Error("Supabase okuma hatası");
+                if(e1 || e2 || e3) {
+                    let msg = (e1?.message || e2?.message || e3?.message || "Bilinmeyen API Hatası");
+                    updateStatus("❌ Supabase Hatası: " + msg + " (API Anahtarlarını kontrol edin)", "alert-danger");
+                    return;
+                }
 
                 localData.customers = cust || [];
                 localData.sizes = sz || [];
@@ -159,8 +174,7 @@
                 renderAll();
                 updateStatus("✅ Veriler güncel ve senkronize.", "alert-success");
             } catch (err) {
-                console.error(err);
-                updateStatus("⚠️ Supabase API Key veya URL hatalı! Lütfen kodun içindeki bilgileri kontrol edin.", "alert-danger");
+                updateStatus("❌ Bağlantı hatası: " + err.message, "alert-danger");
             }
         }
 
@@ -273,13 +287,13 @@
                 <tr>
                     <td class="fw-bold">${s.name}</td>
                     <td>${parseFloat(s.price).toFixed(2)} TL</td>
-                    <td><button onclick="deleteSize(${s.id})" class="btn btn-sm btn-danger py-0 px-2 font-monospace">Sil</button></td>
+                    <td><button onclick="deleteSize(${s.id})" class="btn btn-sm btn-danger py-0 px-2">Sil</button></td>
                 </tr>
             `).join('');
         }
 
-        // Sayfa açıldığında başlat
-        fetchData();
+        // Sistemi başlat
+        initSystem();
     </script>
 </body>
 </html>
