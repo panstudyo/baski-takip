@@ -148,11 +148,24 @@
         }
 
         function switchTab(tabId) {
-            document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
-            document.getElementById(tabId).classList.add('active');
-            document.querySelectorAll('.nav-btn').forEach(btn => btn.classList.remove('bg-blue-700', 'font-semibold'));
-            event.target.classList.add('bg-blue-700', 'font-semibold');
-        }
+    // Tüm sekme içeriklerini gizle
+    document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
+    // Seçilen sekmeyi göster
+    document.getElementById(tabId).classList.add('active');
+    
+    // Tüm butonların aktiflik rengini kaldır
+    document.querySelectorAll('.nav-btn').forEach(btn => {
+        btn.classList.remove('bg-blue-700', 'font-semibold');
+        btn.classList.add('hover:bg-blue-500');
+    });
+    
+    // Tıklanan butona aktiflik rengini ver (Bulmak için döngü kullanıyoruz, daha güvenli)
+    const clickedBtn = Array.from(document.querySelectorAll('.nav-btn')).find(btn => btn.getAttribute('onclick').includes(tabId));
+    if (clickedBtn) {
+        clickedBtn.classList.add('bg-blue-700', 'font-semibold');
+        clickedBtn.classList.remove('hover:bg-blue-500');
+    }
+}
 
         function addCustomer(e) {
             e.preventDefault();
