@@ -8,25 +8,24 @@
     <style>
         .tab-content { display: none; }
         .tab-content.active { display: block; }
-        .loading-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 9999; justify-content: center; align-items: center; color: white; font-weight: bold; font-size: 1.2rem; }
     </style>
 </head>
 <body class="bg-gray-100 text-gray-800 font-sans">
-
-    <div id="loading" class="loading-overlay">⌛ İşlem Yapılıyor, Lütfen Bekleyin...</div>
 
     <nav class="bg-blue-600 text-white shadow-md p-4">
         <div class="container mx-auto flex justify-between items-center">
             <h1 class="text-xl font-bold">📸 Pan Fotoğraf Baskı Takip</h1>
             <div class="flex gap-2">
-                <button id="btn-siparis" onclick="switchTab('siparis-ekrani')" class="nav-btn px-4 py-2 rounded bg-blue-700 font-semibold">Siparişler</button>
-                <button id="btn-cari" onclick="switchTab('cari-yonetimi')" class="nav-btn px-4 py-2 rounded hover:bg-blue-500">Cariler</button>
-                <button id="btn-ayar" onclick="switchTab('ebat-ayarlari')" class="nav-btn px-4 py-2 rounded hover:bg-blue-500">Ayarlar</button>
+                <button id="btn-siparis" onclick="switchTab('siparis-ekrani')" class="px-4 py-2 rounded bg-blue-700 font-semibold">Siparişler</button>
+                <button id="btn-cari" onclick="switchTab('cari-yonetimi')" class="px-4 py-2 rounded hover:bg-blue-500">Cariler</button>
+                <button id="btn-ayar" onclick="switchTab('ebat-ayarlari')" class="px-4 py-2 rounded hover:bg-blue-500">Ayarlar</button>
             </div>
         </div>
     </nav>
 
     <div class="container mx-auto mt-6 p-4">
+        <div id="loading-status" class="mb-4 text-center text-sm font-semibold text-blue-600">⌛ Veriler Google Sheets'ten yükleniyor...</div>
+
         <div id="siparis-ekrani" class="tab-content active">
             <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
                 <div class="bg-white p-6 rounded-lg shadow">
@@ -89,63 +88,62 @@
     </div>
 
     <script>
-        // ⚠️ Buraya Google Apps Script Web Uygulaması linkinizi tam olarak yapıştırın:
-        const SCRIPT_URL = "BURAYA_GOOGLE_APPS_SCRIPT_LINKINI_YAPISTIRIN";
+        // ⚠️ Buraya en son aldığınız güncel Google Script URL'sini yapıştırın:
+        const SCRIPT_URL = "https://script.google.com/macros/s/AKfycby6QHTvgUHXtGuRF68c5z4PgLvwETNuLfI91--Rc1LaMl2gQ8Fgv9OdqLHd0z1T-D7J/exec";
 
         let data = { customers: [], sizes: [], orders: [] };
 
-        function showLoading(show) {
-            document.getElementById('loading').style.display = show ? 'flex' : 'none';
-        }
-
-        // Kesinlikle çakışma yaratmayacak, tarayıcı bağımsız sekme geçişi
+        // Bağımsız buton geçişi (Kilitlenme ihtimali sıfırlandı)
         function switchTab(tabId) {
-            // Sekmeleri değiştir
             document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
             document.getElementById(tabId).classList.add('active');
             
-            // Buton renklerini sıfırla
-            document.getElementById('btn-siparis').className = "nav-btn px-4 py-2 rounded hover:bg-blue-500";
-            document.getElementById('btn-cari').className = "nav-btn px-4 py-2 rounded hover:bg-blue-500";
-            document.getElementById('btn-ayar').className = "nav-btn px-4 py-2 rounded hover:bg-blue-500";
+            document.getElementById('btn-siparis').className = "px-4 py-2 rounded hover:bg-blue-500";
+            document.getElementById('btn-cari').className = "px-4 py-2 rounded hover:bg-blue-500";
+            document.getElementById('btn-ayar').className = "px-4 py-2 rounded hover:bg-blue-500";
             
-            // Aktif butonu renklendir
-            if (tabId === 'siparis-ekrani') document.getElementById('btn-siparis').className = "nav-btn px-4 py-2 rounded bg-blue-700 font-semibold";
-            if (tabId === 'cari-yonetimi') document.getElementById('btn-cari').className = "nav-btn px-4 py-2 rounded bg-blue-700 font-semibold";
-            if (tabId === 'ebat-ayarlari') document.getElementById('btn-ayar').className = "nav-btn px-4 py-2 rounded bg-blue-700 font-semibold";
+            if (tabId === 'siparis-ekrani') document.getElementById('btn-siparis').className = "px-4 py-2 rounded bg-blue-700 font-semibold";
+            if (tabId === 'cari-yonetimi') document.getElementById('btn-cari').className = "px-4 py-2 rounded bg-blue-700 font-semibold";
+            if (tabId === 'ebat-ayarlari') document.getElementById('btn-ayar').className = "px-4 py-2 rounded bg-blue-700 font-semibold";
         }
 
-        async function fetchData() {
-            showLoading(true);
-            try {
-                let urlWithCache = SCRIPT_URL + (SCRIPT_URL.includes('?') ? '&' : '?') + '_=' + new Date().getTime();
-                let res = await fetch(urlWithCache);
-                let json = await res.json();
-                
-                data.orders = json.orders ? json.orders.map(o => ({ date: o[0], customerName: o[1], details: o[2], total: parseFloat(o[3]) || 0, isPaid: o[4] })) : [];
-                data.customers = json.customers ? json.customers.map(c => ({ id: c[0], name: c[1], phone: c[2], type: c[3], balance: parseFloat(c[4]) || 0 })) : [];
-                data.sizes = json.sizes ? json.sizes.map(s => ({ id: s[0], name: s[1], price: parseFloat(s[2]) || 0 })) : [];
-                
-                renderAll();
-            } catch (err) {
-                console.error("Veri çekme hatası:", err);
-            }
-            showLoading(false);
+        function updateStatus(text) {
+            document.getElementById('loading-status').innerText = text;
         }
 
-        async function postToSheets(payload) {
-            showLoading(true);
-            try {
-                await fetch(SCRIPT_URL, {
-                    method: "POST",
-                    mode: "no-cors",
-                    headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify(payload)
+        function fetchData() {
+            updateStatus("⌛ Güncel veriler Google Sheets'ten çekiliyor...");
+            let urlWithCache = SCRIPT_URL + (SCRIPT_URL.includes('?') ? '&' : '?') + '_=' + new Date().getTime();
+            
+            fetch(urlWithCache)
+                .then(res => res.json())
+                .then(json => {
+                    data.orders = json.orders ? json.orders.map(o => ({ date: o[0], customerName: o[1], details: o[2], total: parseFloat(o[3]) || 0, isPaid: o[4] })) : [];
+                    data.customers = json.customers ? json.customers.map(c => ({ id: c[0], name: c[1], phone: c[2], type: c[3], balance: parseFloat(c[4]) || 0 })) : [];
+                    data.sizes = json.sizes ? json.sizes.map(s => ({ id: s[0], name: s[1], price: parseFloat(s[2]) || 0 })) : [];
+                    renderAll();
+                    updateStatus("✅ Veriler güncel.");
+                })
+                .catch(err => {
+                    console.error(err);
+                    updateStatus("❌ Veri çekme başarısız oldu. Bağlantıyı kontrol edin.");
                 });
-                setTimeout(fetchData, 1200);
-            } catch (err) {
-                setTimeout(fetchData, 1200);
-            }
+        }
+
+        function postToSheets(payload) {
+            updateStatus("⏳ Değişiklik Google Sheets'e gönderiliyor...");
+            fetch(SCRIPT_URL, {
+                method: "POST",
+                mode: "no-cors",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(payload)
+            })
+            .then(() => {
+                setTimeout(fetchData, 1000);
+            })
+            .catch(() => {
+                setTimeout(fetchData, 1000);
+            })
         }
 
         function addCustomer(e) {
@@ -215,6 +213,7 @@
             `).join('');
         }
 
+        // Sayfa açılışında tetikle
         fetchData();
     </script>
 </body>
